@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
       .populate("merchantId", "businessName userId")
       .populate("merchantId.userId", "name email")
       .sort({ createdAt: -1 })
+      console.log("Fetched Deposits:", deposits)
 
     return NextResponse.json({ deposits })
   } catch (error) {

@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, Wallet, AlertCircle, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
 
 interface Merchant {
   _id: string;
@@ -124,10 +125,9 @@ export default function CollectDepositPage() {
 
       if (response.ok && data.success) {
         setSuccess(
-          `Deposit of ₹${formData.amount} collected successfully! ${
-            data.deposit?.receiptNumber
-              ? `Receipt: ${data.deposit.receiptNumber}`
-              : ""
+          `Deposit of ₹${formData.amount} collected successfully! ${data.deposit?.receiptNumber
+            ? `Receipt: ${data.deposit.receiptNumber}`
+            : ""
           }`
         );
 
@@ -276,7 +276,8 @@ export default function CollectDepositPage() {
 
               <div>
                 <Label htmlFor="amount">Deposit Amount (₹) *</Label>
-                <Select
+
+                {/* <Select
                   value={formData.amount}
                   onValueChange={(value) => handleInputChange("amount", value)}
                 >
@@ -291,7 +292,20 @@ export default function CollectDepositPage() {
                     <SelectItem value="25000">₹25,000</SelectItem>
                     <SelectItem value="50000">₹50,000</SelectItem>
                   </SelectContent>
-                </Select>
+                </Select> */}
+
+                <Input
+                  id="amount"
+                  type="number"
+                  min="0"
+                  step="100"
+                  inputMode="numeric"
+                  value={formData.amount}
+                  onChange={(e) => handleInputChange("amount", e.target.value)}
+                  required
+                />
+
+
               </div>
 
               <div>

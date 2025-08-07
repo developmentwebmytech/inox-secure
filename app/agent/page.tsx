@@ -30,6 +30,7 @@ export default function AgentDashboard() {
     try {
       const response = await fetch("/api/agent/dashboard-stats")
       const data = await response.json()
+      console.log("Agent Stats:", data  )
       setStats(data)
     } catch (error) {
       console.error("Failed to fetch agent stats:", error)
@@ -147,7 +148,7 @@ export default function AgentDashboard() {
                 Collection Reports
               </Button>
             </Link>
-            <Link href="/agent/reports/merchants">
+            <Link href="/agent/reports/collections">
               <Button variant="outline" className="w-full  bg-transparent text-center bg-blue-600 text-white mt-4"> 
                 Merchant Reports
               </Button>

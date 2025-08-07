@@ -40,6 +40,7 @@ export default function AgentDepositsPage() {
     try {
       const response = await fetch("/api/agent/deposits")
       const data = await response.json()
+      console.log("Fetched Deposits:", data)
       setDeposits(data.deposits || [])
     } catch (error) {
       console.error("Failed to fetch deposits:", error)
@@ -74,6 +75,7 @@ export default function AgentDepositsPage() {
   const confirmedAmount = filteredDeposits
     .filter((deposit) => deposit.status === "confirmed")
     .reduce((sum, deposit) => sum + deposit.amount, 0)
+    console.log("Total Amount:", totalAmount)
 
   if (loading) {
     return <div className="p-6">Loading deposits...</div>

@@ -17,18 +17,27 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
     const payload = session.user
-    
+
     // Find agent
     const agent = await User.findById(payload.id)
+    console.log("Agent ID:", agent?._id)
     if (!agent) {
       return NextResponse.json({ message: "Agent not found" }, { status: 404 })
     }
 
     // Find merchant and verify it belongs to this agent
+    // const merchant = await Merchant.findOne({
+    //   _id: params.id,
+    //   createdBy: agent._id,
+    // }).populate("userId", "name email phone")
+
+
     const merchant = await Merchant.findOne({
       _id: params.id,
-      createdBy: agent._id,
+      agentId: agent._id,
     }).populate("userId", "name email phone")
+    // console.log("Merchant ID:", merchant?._id)
+
 
     if (!merchant) {
       return NextResponse.json({ message: "Merchant not found" }, { status: 404 })
@@ -54,6 +63,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       totalCouponsRedeemed,
       lastTransactionDate: lastTransaction?.createdAt,
     }
+    console.log("Merchant Stats:", stats)
 
     return NextResponse.json({
       merchant: {

@@ -38,6 +38,7 @@ interface MerchantDetails {
 
 export default function MerchantDetailsPage() {
   const params = useParams()
+  console.log("Merchant ID:", params.id)
   const [merchant, setMerchant] = useState<MerchantDetails | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -50,6 +51,7 @@ export default function MerchantDetailsPage() {
       const response = await fetch(`/api/agent/merchants/${params.id}`)
       if (response.ok) {
         const data = await response.json()
+        console.log("Fetched Merchant Details:", data)
         setMerchant(data.merchant)
       }
     } catch (error) {

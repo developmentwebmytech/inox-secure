@@ -14,6 +14,7 @@ interface Merchant {
   businessType: string
   status: string
   userId: {
+    // _id: string
     name: string
     email: string
     phone: string
@@ -37,6 +38,7 @@ export default function AgentMerchantsPage() {
     try {
       const response = await fetch("/api/agent/merchants")
       const data = await response.json()
+      console.log("Fetched Merchants:", data)
       setMerchants(data.merchants || [])
     } catch (error) {
       console.error("Failed to fetch merchants:", error)
