@@ -51,11 +51,11 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
         <h1 className="text-3xl font-bold mb-4">{service.name}</h1>
 
         <div className="flex items-center gap-4 mb-4">
-          <div className="flex items-center gap-1">
+          {/* <div className="flex items-center gap-1">
             <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
             <span className="font-medium">{service.rating}</span>
             <span className="text-gray-500">({service.reviews} reviews)</span>
-          </div>
+          </div> */}
           {service.duration && (
             <>
               <span className="text-gray-300">•</span>
