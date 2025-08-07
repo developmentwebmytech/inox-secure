@@ -1,58 +1,94 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { toast } from "@/hooks/use-toast"
+import { useState } from "react";
+import { Download } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { Button } from "@/components/ui/button"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation";
+// import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner"
 
 interface OrderDetailProps {
-  order: any
+  order: any;
 }
 
 export function OrderDetail({ order }: OrderDetailProps) {
-  const router = useRouter()
-  const [isUpdating, setIsUpdating] = useState(false)
-  const [status, setStatus] = useState(order.status)
-  const [trackingNumber, setTrackingNumber] = useState(order.tracking_number || "")
-  const [notes, setNotes] = useState(order.notes || "")
+   const { data: session } = useSession()
+  const router = useRouter();
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [status, setStatus] = useState(order.status);
+  const [trackingNumber, setTrackingNumber] = useState(
+    order.tracking_number || ""
+  );
+  const [notes, setNotes] = useState(order.notes || "");
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString() + " " + date.toLocaleTimeString()
-  }
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
       maximumFractionDigits: 0,
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 text-yellow-800";
       case "processing":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "shipped":
-        return "bg-purple-100 text-purple-800"
+        return "bg-purple-100 text-purple-800";
       case "delivered":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "cancelled":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
       case "returned":
-        return "bg-orange-100 text-orange-800"
+        return "bg-orange-100 text-orange-800";
       case "return_requested":
-        return "bg-amber-100 text-amber-800"
+        return "bg-amber-100 text-amber-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
+
+  
+
+  const handleDownloadInvoice = async () => {
+      if (!order) return
+  
+      try {
+        const response = await fetch(`/api/users/${session?.user?.id}/orders/${order._id}/invoice`)
+  
+        if (response.ok) {
+          const blob = await response.blob()
+          const url = window.URL.createObjectURL(blob)
+          const a = document.createElement("a")
+          a.style.display = "none"
+          a.href = url
+          a.download = `invoice-${order.order_number}.html`
+          document.body.appendChild(a)
+          a.click()
+          window.URL.revokeObjectURL(url)
+          toast.success("Invoice downloaded successfully")
+        } else {
+          toast.error("Failed to download invoice")
+        }
+      } catch (error) {
+        console.error("Failed to download invoice:", error)
+        toast.error("Failed to download invoice")
+      }
+    }
+
 
   const handleUpdateStatus = async () => {
-    setIsUpdating(true)
+    setIsUpdating(true);
 
     try {
       const response = await fetch(`/api/admin/orders/${order._id}`, {
@@ -65,40 +101,45 @@ export function OrderDetail({ order }: OrderDetailProps) {
           tracking_number: trackingNumber,
           notes,
         }),
-      })
+      });
 
-      const data = await response.json()
-      console.log(data)
+      const data = await response.json();
+      console.log(data);
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to update order status")
+        throw new Error(data.error || "Failed to update order status");
       }
 
       toast({
         title: "Success",
         description: "Order status updated successfully",
-      })
+      });
 
       // Refresh the page to show updated data
-      router.refresh()
+      router.refresh();
     } catch (error) {
-      console.error("Error updating order status:", error)
+      console.error("Error updating order status:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update order status",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to update order status",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Order #{order.order_number}</h1>
-          <p className="text-gray-500">Placed on {formatDate(order.createdAt)}</p>
+          <p className="text-gray-500">
+            Placed on {formatDate(order.createdAt)}
+          </p>
         </div>
         <Link
           href="/dashboard/orders"
@@ -114,14 +155,17 @@ export function OrderDetail({ order }: OrderDetailProps) {
           <div className="mb-4">
             <span
               className={`inline-block rounded-full px-3 py-1 text-sm font-semibold ${getStatusBadgeClass(
-                order.status,
+                order.status
               )}`}
             >
-              {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
+              {order.status.charAt(0).toUpperCase() +
+                order.status.slice(1).replace("_", " ")}
             </span>
           </div>
           <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Update Status</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Update Status
+            </label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
@@ -137,7 +181,9 @@ export function OrderDetail({ order }: OrderDetailProps) {
             </select>
           </div>
           <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Tracking Number</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Tracking Number
+            </label>
             <input
               type="text"
               value={trackingNumber}
@@ -147,7 +193,9 @@ export function OrderDetail({ order }: OrderDetailProps) {
             />
           </div>
           <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Admin Notes</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Admin Notes
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -169,13 +217,16 @@ export function OrderDetail({ order }: OrderDetailProps) {
           <h2 className="mb-4 text-lg font-semibold">Customer Information</h2>
           <div className="space-y-3">
             <p>
-              <span className="font-medium">Name:</span> {order.shipping_address?.full_name || "N/A"}
+              <span className="font-medium">Name:</span>{" "}
+              {order.shipping_address?.full_name || "N/A"}
             </p>
             <p>
-              <span className="font-medium">Email:</span> {order.user_email || "N/A"}
+              <span className="font-medium">Email:</span>{" "}
+              {order.user_email || "N/A"}
             </p>
             <p>
-              <span className="font-medium">Phone:</span> {order.shipping_address?.phone || "N/A"}
+              <span className="font-medium">Phone:</span>{" "}
+              {order.shipping_address?.phone || "N/A"}
             </p>
           </div>
         </div>
@@ -185,9 +236,12 @@ export function OrderDetail({ order }: OrderDetailProps) {
           <div className="space-y-3">
             <p>{order.shipping_address?.full_name || "N/A"}</p>
             <p>{order.shipping_address?.address_line1 || "N/A"}</p>
-            {order.shipping_address?.address_line2 && <p>{order.shipping_address.address_line2}</p>}
+            {order.shipping_address?.address_line2 && (
+              <p>{order.shipping_address.address_line2}</p>
+            )}
             <p>
-              {order.shipping_address?.city || "N/A"}, {order.shipping_address?.state || "N/A"}{" "}
+              {order.shipping_address?.city || "N/A"},{" "}
+              {order.shipping_address?.state || "N/A"}{" "}
               {order.shipping_address?.postal_code || "N/A"}
             </p>
             <p>{order.shipping_address?.country || "N/A"}</p>
@@ -246,15 +300,21 @@ export function OrderDetail({ order }: OrderDetailProps) {
                         )}
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {item.name}
+                        </div>
                         <div className="text-sm text-gray-500">
                           {item.size}, {item.color}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.quantity}</td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatCurrency(item.price)}</td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                    {item.quantity}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                    {formatCurrency(item.price)}
+                  </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                     {formatCurrency(item.price * item.quantity)}
                   </td>
@@ -284,19 +344,32 @@ export function OrderDetail({ order }: OrderDetailProps) {
               <span>{formatCurrency(order.total)}</span>
             </div>
           </div>
+          {/* Download PDF Button */}
+        <Button  onClick={handleDownloadInvoice} 
+         className="gap-2">
+          <Download className="h-4 w-4" />
+          Download Invoice  
+           
+        </Button>
         </div>
+
+        
+      
       </div>
 
       {order.cancel_reason && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-red-800">Cancellation Information</h2>
+          <h2 className="mb-4 text-lg font-semibold text-red-800">
+            Cancellation Information
+          </h2>
           <div className="space-y-2">
             <p>
               <span className="font-medium">Reason:</span> {order.cancel_reason}
             </p>
             {order.additionalComments && (
               <p>
-                <span className="font-medium">Additional Comments:</span> {order.additionalComments}
+                <span className="font-medium">Additional Comments:</span>{" "}
+                {order.additionalComments}
               </p>
             )}
           </div>
@@ -305,19 +378,22 @@ export function OrderDetail({ order }: OrderDetailProps) {
 
       {order.return_reason && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-amber-800">Return Information</h2>
+          <h2 className="mb-4 text-lg font-semibold text-amber-800">
+            Return Information
+          </h2>
           <div className="space-y-2">
             <p>
               <span className="font-medium">Reason:</span> {order.return_reason}
             </p>
             {order.additionalComments && (
               <p>
-                <span className="font-medium">Additional Comments:</span> {order.additionalComments}
+                <span className="font-medium">Additional Comments:</span>{" "}
+                {order.additionalComments}
               </p>
             )}
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }

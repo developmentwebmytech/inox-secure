@@ -417,7 +417,7 @@ export default function OrderDetailsPage() {
             </p>
           </div>
         </div>
-        <Button onClick={handleDownloadInvoice} className="gap-2">
+        <Button onClick={handleDownloadInvoice} className="gap-4">
           <Download className="h-4 w-4" />
           Download Invoice
         </Button>
