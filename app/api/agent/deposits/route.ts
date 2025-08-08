@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       .populate("merchantId", "businessName userId")
       .populate("merchantId.userId", "name email")
       .sort({ createdAt: -1 })
-      console.log("Fetched Deposits:", deposits)
+      // console.log("Fetched Agent Deposits:", deposits)
 
     return NextResponse.json({ deposits })
   } catch (error) {
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     // Update merchant wallet
     const balanceBefore = merchant.wallet.balance
     merchant.wallet.balance += Number.parseFloat(amount)
-    merchant.wallet.lockedAmount += Number.parseFloat(amount)
+    // merchant.wallet.lockedAmount += Number.parseFloat(amount)
     merchant.wallet.maturityDate = maturityDate
     await merchant.save()
 

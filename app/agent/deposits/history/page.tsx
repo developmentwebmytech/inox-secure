@@ -203,13 +203,13 @@ export default function DepositsHistoryPage() {
                 <div key={deposit._id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold">{deposit.merchantId.businessName}</h3>
+                      <h3 className="font-semibold">{deposit.merchantId?.businessName}</h3>
                       <Badge className={getStatusColor(deposit.status)}>{deposit.status.toUpperCase()}</Badge>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
                       <div>
-                        <p>Merchant: {deposit.merchantId.userId.name}</p>
-                        <p>Receipt: {deposit.receiptNumber}</p>
+                        <p>Merchant: {deposit.merchantId?.userId.name}</p>
+                        <p>Receipt: {deposit?.receiptNumber}</p>
                         <p>Collection Date: {new Date(deposit.createdAt).toLocaleDateString()}</p>
                       </div>
                       <div>

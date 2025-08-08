@@ -1,18 +1,18 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, User, Building, Phone, Mail, Wallet, MapPin } from "lucide-react"
+import { ArrowLeft, User, Building, Phone, Mail, Wallet, MapPin, Trash2 } from "lucide-react"
 import Link from "next/link"
 
 interface MerchantDetails {
   _id: string
   businessName: string
   businessType: string
-  businessAddress: string
+  address: string
   businessPhone: string
   businessEmail: string
   gstNumber?: string
@@ -25,6 +25,8 @@ interface MerchantDetails {
   }
   wallet: {
     balance: number
+    lockedAmount: number
+    maturityDate?: Date
   }
   createdAt: string
   updatedAt: string
@@ -38,9 +40,10 @@ interface MerchantDetails {
 
 export default function MerchantDetailsPage() {
   const params = useParams()
-  console.log("Merchant ID:", params.id)
+  const router = useRouter()
   const [merchant, setMerchant] = useState<MerchantDetails | null>(null)
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchMerchantDetails()
@@ -51,13 +54,35 @@ export default function MerchantDetailsPage() {
       const response = await fetch(`/api/agent/merchants/${params.id}`)
       if (response.ok) {
         const data = await response.json()
-        console.log("Fetched Merchant Details:", data)
+        // console.log("Fetched Merchant:", data.merchant)
         setMerchant(data.merchant)
       }
     } catch (error) {
       console.error("Failed to fetch merchant details:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this merchant? This action cannot be undone.")) return
+    try {
+      setDeleting(true)
+      const response = await fetch(`/api/agent/merchants/${params.id}`, {
+        method: "DELETE",
+      })
+      if (response.ok) {
+        alert("Merchant deleted successfully")
+        router.push("/agent/merchants")
+      } else {
+        const data = await response.json()
+        alert(data.message || "Failed to delete merchant")
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
+      alert("Something went wrong while deleting.")
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -106,6 +131,7 @@ export default function MerchantDetailsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Basic Information */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Business Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -118,7 +144,6 @@ export default function MerchantDetailsPage() {
                 <h2 className="text-2xl font-semibold">{merchant.businessName}</h2>
                 <Badge className={getStatusColor(merchant.status)}>{merchant.status.toUpperCase()}</Badge>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Business Type</label>
@@ -129,16 +154,14 @@ export default function MerchantDetailsPage() {
                   <p className="font-medium">{new Date(merchant.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
-
               <div>
                 <label className="text-sm font-medium text-gray-500">Business Address</label>
                 <p className="font-medium flex items-start gap-2">
                   <MapPin className="w-4 h-4 mt-1 text-gray-400" />
-                  {merchant.businessAddress}
+                  {merchant.address}
                 </p>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Business Phone</label>
                   <p className="font-medium flex items-center gap-2">
@@ -153,8 +176,7 @@ export default function MerchantDetailsPage() {
                     {merchant.businessEmail}
                   </p>
                 </div>
-              </div>
-
+              </div> */}
               {(merchant.gstNumber || merchant.panNumber) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {merchant.gstNumber && (
@@ -174,6 +196,7 @@ export default function MerchantDetailsPage() {
             </CardContent>
           </Card>
 
+          {/* Owner Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -202,6 +225,7 @@ export default function MerchantDetailsPage() {
 
         {/* Stats and Actions */}
         <div className="space-y-6">
+          {/* Wallet Balance */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -214,6 +238,25 @@ export default function MerchantDetailsPage() {
             </CardContent>
           </Card>
 
+          {/* Locked Amount */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wallet className="w-5 h-5" />
+                Locked Amount
+              </CardTitle>
+              <p className="text-sm text-gray-500">
+                Locked amount will be credited automatically after the 3-month maturity period ends.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-green-600">
+                ₹{merchant.wallet.lockedAmount.toLocaleString()}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Statistics */}
           <Card>
             <CardHeader>
               <CardTitle>Statistics</CardTitle>
@@ -242,6 +285,7 @@ export default function MerchantDetailsPage() {
             </CardContent>
           </Card>
 
+          {/* Actions */}
           {merchant.status === "approved" && (
             <div className="space-y-3">
               <Link href="/agent/deposits/collect">
@@ -254,6 +298,17 @@ export default function MerchantDetailsPage() {
               </Link>
             </div>
           )}
+
+          {/* Delete Button */}
+          <Button
+            variant="destructive"
+            className="w-full flex items-center justify-center gap-2"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            <Trash2 className="w-4 h-4" />
+            {deleting ? "Deleting..." : "Delete Merchant"}
+          </Button>
         </div>
       </div>
     </div>

@@ -121,11 +121,12 @@ export default function CollectDepositPage() {
       });
 
       const data = await response.json();
-      console.log("Response data:", data); // Debug log
+      // console.log("Response data:", data); // Debug log
 
-      if (response.ok && data.success) {
+      // ✅ Fixed: only check response.ok, not data.success
+      if (response.ok) {
         setSuccess(
-          `Deposit of ₹${formData.amount} collected successfully! ${data.deposit?.receiptNumber
+          `Deposit of ₹${formData.amount} collected successfully! ${data?.deposit?.receiptNumber
             ? `Receipt: ${data.deposit.receiptNumber}`
             : ""
           }`
@@ -143,7 +144,7 @@ export default function CollectDepositPage() {
           router.push("/agent/deposits/history");
         }, 3000);
       } else {
-        setError(data.message || data.error || "Failed to collect deposit");
+        setError(data?.error || "Failed to collect deposit");
       }
     } catch (error) {
       console.error("Deposit submission error:", error);
@@ -154,6 +155,7 @@ export default function CollectDepositPage() {
       setLoading(false);
     }
   };
+
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -337,13 +339,14 @@ export default function CollectDepositPage() {
               )}
 
               {success && (
-                <Alert className="border-green-200 bg-green-50">
+                <Alert className="border-green-200 bg-green-50 text-green-800">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <AlertDescription className="text-green-800">
                     {success}
                   </AlertDescription>
                 </Alert>
               )}
+
 
               <Button
                 type="submit"
@@ -368,7 +371,7 @@ export default function CollectDepositPage() {
 
       {/* Debug Information (remove in production) */}
       {/* Debug Information - Remove in production */}
-      {process.env.NODE_ENV === "development" && (
+      {/* {process.env.NODE_ENV === "development" && (
         <Card className="mt-6">
           <CardHeader>
             <CardTitle className="text-sm">Debug Information</CardTitle>
@@ -394,7 +397,7 @@ export default function CollectDepositPage() {
             </div>
           </CardContent>
         </Card>
-      )}
+      )} */}
     </div>
   );
 }

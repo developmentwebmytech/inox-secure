@@ -25,6 +25,8 @@ interface Merchant {
   }
   wallet: {
     balance: number
+    lockedAmount: number
+    maturityDate: string
   }
   createdAt: string
 }
@@ -155,7 +157,12 @@ export default function AdminMerchantsPage() {
                       <div>
                         <p>Agent: {merchant.agentId?.name}</p>
                         <p>Wallet: ₹{merchant.wallet?.balance.toLocaleString()}</p>
-                        <p>Registered: {new Date(merchant?.createdAt).toLocaleDateString()}</p>
+                        <p>Locked Amount: ₹{merchant.wallet?.lockedAmount.toLocaleString()}</p>
+                        <span>
+                          Maturity Break: {new Date(merchant.wallet.maturityDate).toLocaleDateString("en-GB")}
+                        </span>
+
+
                       </div>
                     </div>
                   </div>

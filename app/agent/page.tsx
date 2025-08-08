@@ -30,7 +30,7 @@ export default function AgentDashboard() {
     try {
       const response = await fetch("/api/agent/dashboard-stats")
       const data = await response.json()
-      console.log("Agent Stats:", data  )
+      // console.log("Agent Stats:", data  )
       setStats(data)
     } catch (error) {
       console.error("Failed to fetch agent stats:", error)

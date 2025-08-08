@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { UserPlus, Search, Eye } from "lucide-react"
+import { UserPlus, Search, Eye, Trash2 } from "lucide-react"
 import Link from "next/link"
 
 interface Merchant {
@@ -14,13 +14,14 @@ interface Merchant {
   businessType: string
   status: string
   userId: {
-    // _id: string
     name: string
     email: string
     phone: string
   }
   wallet: {
     balance: number
+    lockedAmount: number
+    maturityDate: string
   }
   createdAt: string
 }
@@ -29,6 +30,7 @@ export default function AgentMerchantsPage() {
   const [merchants, setMerchants] = useState<Merchant[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchMerchants()
@@ -38,12 +40,32 @@ export default function AgentMerchantsPage() {
     try {
       const response = await fetch("/api/agent/merchants")
       const data = await response.json()
-      console.log("Fetched Merchants:", data)
       setMerchants(data.merchants || [])
     } catch (error) {
       console.error("Failed to fetch merchants:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this merchant?")) return
+
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/agent/merchants/${id}`, {
+        method: "DELETE",
+      })
+
+      if (res.ok) {
+        setMerchants((prev) => prev.filter((m) => m._id !== id))
+      } else {
+        console.error("Failed to delete merchant")
+      }
+    } catch (error) {
+      console.error("Error deleting merchant:", error)
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -63,7 +85,7 @@ export default function AgentMerchantsPage() {
   const filteredMerchants = merchants.filter(
     (merchant) =>
       merchant.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      merchant.userId.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      merchant.userId.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   if (loading) {
@@ -113,7 +135,12 @@ export default function AgentMerchantsPage() {
                     <p className="text-sm text-gray-600">Phone: {merchant.userId.phone}</p>
                     <div className="flex gap-4 mt-2 text-sm text-gray-500">
                       <span>Wallet: ₹{merchant.wallet.balance.toLocaleString()}</span>
+                      <span>Locked Amount: ₹{merchant.wallet.lockedAmount.toLocaleString()}</span>
                       <span>Registered: {new Date(merchant.createdAt).toLocaleDateString()}</span>
+                      <span>
+                        Maturity: {new Date(merchant.wallet.maturityDate).toLocaleDateString("en-GB")}
+                      </span>
+
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -123,11 +150,20 @@ export default function AgentMerchantsPage() {
                         View Details
                       </Button>
                     </Link>
-                    {merchant.status === "approved" && (
+                    {/* {merchant.status === "approved" && (
                       <Link href="/agent/deposits/collect">
                         <Button size="sm">Collect Deposit</Button>
                       </Link>
-                    )}
+                    )} */}
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(merchant._id)}
+                      disabled={deletingId === merchant._id}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      {deletingId === merchant._id ? "Deleting..." : "Delete"}
+                    </Button>
                   </div>
                 </div>
               ))

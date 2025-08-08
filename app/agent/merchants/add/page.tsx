@@ -29,6 +29,8 @@ export default function AddMerchantPage() {
       bankName: "",
       accountHolderName: "",
     },
+    mode: "",
+    lockedAmount: 1000
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -62,7 +64,7 @@ export default function AddMerchantPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setSuccess(`Merchant registered successfully! Login credentials sent to ${formData.email}`)
+        setSuccess(`Merchant registered successfully! With Locked Amount 1000 Rupees to ${formData.email}`)
         setTimeout(() => {
           router.push("/agent/merchants")
         }, 3000)
@@ -248,6 +250,55 @@ export default function AddMerchantPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Mode of Operation */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Mode of Operation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Select
+              value={formData.mode}
+              onValueChange={(value) => handleInputChange("mode", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select mode of operation" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="online">Online</SelectItem>
+                <SelectItem value="offline">Offline</SelectItem>
+              </SelectContent>
+            </Select>
+
+
+          </CardContent>
+        </Card>
+
+        {/* Locked Amount / Deposit Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Initial Locked Deposit</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div>
+              <Label htmlFor="lockedAmount">Deposit Amount (₹)</Label>
+              <Input
+                id="lockedAmount"
+                type="number"
+                min={1000}
+                value={formData.lockedAmount}
+                onChange={(e) =>
+                  handleInputChange("lockedAmount", e.target.value)
+                }
+                required
+              />
+              <p className="text-sm text-muted-foreground mt-2">
+                Minimum deposit is ₹1000. This amount will be locked for 3 months and then released.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
 
         {error && (
           <Alert variant="destructive">
