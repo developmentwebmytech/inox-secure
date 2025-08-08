@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Eye, Edit, Trash2, ImageIcon } from "lucide-react"
+import { Plus, Search, Eye, Edit, Trash2, ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
 import { DeleteAlertDialog } from "@/components/delete-alert-dialog"
 import Link from "next/link"
@@ -43,18 +43,24 @@ export default function AllProductsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [currentPage, setCurrentPage] = useState(1)
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean
     product: Product | null
   }>({ open: false, product: null })
+
   const { toast } = useToast()
+
+  const ITEMS_PER_PAGE = 15
 
   const fetchProducts = async () => {
     try {
       const response = await fetch("/api/admin/products")
       if (response.ok) {
         const data = await response.json()
-        setProducts(data.products)
+        setProducts((data.productview?.[0]) || [])
+
+        console.log("Fetched products:", data.productview)
       }
     } catch (error) {
       toast({
@@ -69,12 +75,10 @@ export default function AllProductsPage() {
 
   const handleDelete = async () => {
     if (!deleteDialog.product) return
-
     try {
       const response = await fetch(`/api/admin/products/${deleteDialog.product._id}`, {
         method: "DELETE",
       })
-
       if (response.ok) {
         toast({
           title: "Success",
@@ -99,13 +103,26 @@ export default function AllProductsPage() {
     fetchProducts()
   }, [])
 
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter])
+
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || product.status === statusFilter
+      product.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === "all" || product?.status === statusFilter
     return matchesSearch && matchesStatus
   })
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const currentProducts = filteredProducts.slice(startIndex, endIndex)
+
+  const getPageNumbers = () => {
+    return Array.from({ length: totalPages }, (_, i) => i + 1)
+  }
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>
@@ -130,16 +147,14 @@ export default function AllProductsPage() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48">
@@ -156,12 +171,21 @@ export default function AllProductsPage() {
         </CardContent>
       </Card>
 
+      {/* Results Summary */}
+      {filteredProducts.length > 0 && (
+        <div className="flex justify-between items-center text-sm text-muted-foreground">
+          <div>
+            Showing {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} of {filteredProducts.length} products
+          </div>
+          <div>Page {currentPage} of {totalPages}</div>
+        </div>
+      )}
+
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredProducts.map((product) => (
+        {currentProducts.map((product) => (
           <Card key={product._id} className="group hover:shadow-lg transition-shadow">
             <CardContent className="p-0">
-              {/* Product Image */}
               <div className="aspect-square relative overflow-hidden rounded-t-lg">
                 {product.images && product.images.length > 0 ? (
                   <Image
@@ -175,19 +199,13 @@ export default function AllProductsPage() {
                     <ImageIcon className="h-12 w-12 text-gray-400" />
                   </div>
                 )}
-
-                {/* Status Badge */}
                 <div className="absolute top-2 left-2">
-                  <Badge
-                    variant={
-                      product.status === "active" ? "default" : product.status === "draft" ? "secondary" : "outline"
-                    }
-                  >
+                  <Badge variant={
+                    product.status === "active" ? "default" : product.status === "draft" ? "secondary" : "outline"
+                  }>
                     {product.status}
                   </Badge>
                 </div>
-
-                {/* Action Buttons */}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <div className="flex gap-1">
                     <Button size="sm" variant="secondary" asChild>
@@ -206,22 +224,16 @@ export default function AllProductsPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Product Info */}
               <div className="p-4">
                 <h3 className="font-semibold text-lg mb-1 line-clamp-1">{product.title}</h3>
                 <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{product.description}</p>
-
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm text-muted-foreground">
-                    {product.category?.name} • {product.brand?.name}
-                  </div>
+                <div className="flex items-center justify-between mb-2 text-sm text-muted-foreground">
+                  {product.category?.name} • {product.brand?.name}
                 </div>
-
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium">
-                      ${Math.min(...product.variants.map((v) => v.price)).toFixed(2)}
+                      ₹{Math.min(...product.variants.map(v => v.price)).toFixed(2)}
                       {product.variants.length > 1 && (
                         <span className="text-sm text-muted-foreground"> + {product.variants.length - 1} more</span>
                       )}
@@ -258,6 +270,52 @@ export default function AllProductsPage() {
                 </Link>
               </Button>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pagination */}
+      {filteredProducts.length > 0 && totalPages > 1 && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {getPageNumbers().map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className="min-w-[36px]"
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {ITEMS_PER_PAGE} items per page
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
